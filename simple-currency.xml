@@ -1,0 +1,545 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<Module>
+  <ModulePrefs
+    title="__UP_prefsWindowTitle__"
+    width="280"
+    height="30"  
+    scaling="false"
+    description="__MSG_description__"
+    directory_title="__MSG_directory_title__"
+    title_url="http://www.WebNames.com.br"
+    category="Finance"
+    category2="News"
+    author="WebNames.com.br"
+    author_affiliation="WebNames.com.br, Ltda."
+    author_location="Sao Paulo, BRAZIL"
+    author_link="http://WebNames.com.br"
+    author_aboutme="WEBNAMES.com.br - Registro de Dominio, Hospedagem e Construtor de Site..."
+    author_quote="A word to the wise is infuriating.  --Hunter S. Thompson"
+    author_email="shawn.reimerdes+simplecurrency@gmail.com"
+    author_photo="http://hosting.gmodules.com/ig/gadgets/file/117697753513995606918/webnames-author-photo.png"
+    screenshot="http://hosting.gmodules.com/ig/gadgets/file/117697753513995606918/simplecurr-screenshot.png" 
+    thumbnail="http://hosting.gmodules.com/ig/gadgets/file/117697753513995606918/simplecurr-thumbnail.png">
+
+
+  <Locale messages="http://hosting.gmodules.com/ig/gadgets/file/117697753513995606918/cc-ALL_ALL.xml"/> 
+  
+
+          <Require feature="setprefs" /> 
+</ModulePrefs>
+
+<UserPref 
+    name="prefsCachedResult" 
+default_value="No Data, click here to refresh."
+required="false"
+datatype="hidden"/>
+
+<UserPref 
+    name="prefsLastConversionCachedTime" 
+default_value=""
+required="false"
+datatype="hidden"/>
+
+<UserPref
+name="prefsWindowTitle"
+display_name="Title"
+default_value="$imple Currency Converter"
+required="false" />
+
+<UserPref 
+    name="prefsMoneyValue" 
+    display_name="Money Value"
+default_value="1"
+required="false" />
+
+<UserPref 
+    name="prefsCurrencyFrom" 
+    display_name="Currency from: "
+default_value="USD"
+required="false" />
+
+<UserPref 
+    name="prefsCurrencyTo" 
+    display_name="Currency to: "
+default_value="BRL"
+required="false" />
+
+<UserPref
+name="prefsUpdateFrequency"
+display_name="Auto-update conversion interval:"
+default_value="10 minutes"
+datatype="enum" >
+
+<EnumValue value="Disabled" />
+<EnumValue value="1 minute" />
+<EnumValue value="2 minutes" />
+<EnumValue value="3 minutes" />
+<EnumValue value="5 minutes" />
+<EnumValue value="10 minutes" />
+<EnumValue value="15 minutes" />
+<EnumValue value="30 minutes" />
+<EnumValue value="1 hour" />
+</UserPref>
+
+<UserPref name="prefsShowTimestamp" display_name="Show Timestamp" datatype="bool" default_value="true"/>
+
+<Content type="html">
+ <![CDATA[
+
+<style>
+
+SELECT  { font-family: Arial; font-size: small; color: #330000; background-color: #EEEEEE; border: none; width:70px; overflow:hidden }
+</style>
+
+<script type="text/javascript"> 
+
+
+var prefs = new _IG_Prefs(__MODULE_ID__);    
+
+var  objRequest;
+
+var strMoneyConversionValueCached;
+var strTimeStampCurrent;
+var strDisplayConversionContent;
+
+var selectedFromCurrency;
+var selectedToCurrency;
+
+// =======================================================================================================   
+function init() {
+
+        // show cached results
+        document.getElementById('strstaticContent').innerHTML = prefs.getString("prefsCachedResult");
+
+	selectedFromCurrency = prefs.getString("prefsCurrencyFrom");
+	selectedToCurrency = prefs.getString("prefsCurrencyTo");
+
+        // setup defaults in UI
+        var iValue = prefs.getInt("prefsMoneyValue");
+        document.getElementById('inputbox').value = iValue;
+        
+        document.getElementById("currency_from").value = prefs.getString("prefsCurrencyFrom");
+        document.getElementById("currency_to").value = prefs.getString("prefsCurrencyTo");
+	  
+	if (prefs.getBool("prefsShowTimestamp")) {
+		  document.getElementById('time_stamp').innerHTML =  prefs.getString("prefsLastConversionCachedTime");
+	}
+	
+        // launch new request onload  
+        makeGETRequest(iValue, selectedFromCurrency, selectedToCurrency);
+        
+        var timeinterval = prefs.getString("prefsUpdateFrequency");
+        
+         if (timeinterval != "Disabled") {
+        
+            if (timeinterval == "1 minute") 
+		    setInterval(doAutoRefresh, 1000 * 60);
+	  
+             else if (timeinterval == "2 minutes") setInterval(doAutoRefresh, 60000 * 2);  
+            else if (timeinterval == "3 minutes") setInterval(doAutoRefresh, 60000 * 3);        
+             else if (timeinterval == "5 minutes") setInterval(doAutoRefresh, 60000 * 5);  
+             else if (timeinterval == "10 minutes") setInterval(doAutoRefresh, 60000 * 10);    
+             else if (timeinterval == "15 minutes") setInterval(doAutoRefresh, 60000 * 15); 
+             else  if (timeinterval == "30 minutes") setInterval(doAutoRefresh, 60000 * 30);    
+             else  if (timeinterval == "1 hour") setInterval(doAutoRefresh, 60000 * 60);
+	      
+            
+        }
+};
+// ---------
+function doAutoRefresh() {
+          document.getElementById('time_stamp').style.color = "green";
+          makeGETRequest(prefs.getInt("prefsMoneyValue"), selectedFromCurrency, selectedToCurrency);
+};
+// ---------
+function makeGETRequest(currencyAmount, currencyFrom, currencyTo) {	
+
+          var url = "http://www.google.com/ig/calculator?hl=en&q=" + currencyAmount + "" +  currencyFrom + "=?" + currencyTo;
+             
+          var params = {};
+          params[gadgets.io.RequestParameters.METHOD] = gadgets.io.MethodType.GET;
+          gadgets.io.makeRequest(url, response, params);
+        
+};
+// ---------
+function buildCurrencyFlagLink(currency_code) {
+	      
+        var url_to_flag_png = "http://hosting.gmodules.com/ig/gadgets/file/117697753513995606918/currFlag-" + currency_code + ".png";
+		
+        var html_img_ref = " <img src='" + url_to_flag_png + "' style='width:16px;height:11px' align='absmiddle'> ";
+          
+  return html_img_ref;		   
+};
+ // --------- 
+function response(obj) {
+	
+	  var responseText = obj.text;
+	  
+          // parse the JSON formatted response as text  
+	  var arrResponse = responseText.split('"');
+	  arrResponse = arrResponse[3].split(' ');
+	  var currencyValue = arrResponse[0];
+	      
+	  var strResult = document.getElementById('inputbox').value + " " + buildCurrencyFlagLink(selectedFromCurrency) + " " + selectedFromCurrency + " &amp; to &amp; " + buildCurrencyFlagLink(selectedToCurrency) + " " + selectedToCurrency + " = " + currencyValue;
+	  
+	  strDisplayConversionContent = strResult;
+	  
+	  document.getElementById('strstaticContent').innerHTML = strResult;
+	   
+	  // setup the date/time stamp
+	  var d=new Date();
+	  strTimeStampCurrent = d.toLocaleDateString() + " " + d.toLocaleTimeString()
+	  
+	  if (prefs.getBool("prefsShowTimestamp")) {
+                  document.getElementById('time_stamp').innerHTML = strTimeStampCurrent;
+	  } else {
+                  document.getElementById('time_stamp').innerHTML = "";
+          }
+
+          // cache the results
+      	  prefs.set("prefsCachedResult",strResult);	  
+	  prefs.set("prefsLastConversionCachedTime",strTimeStampCurrent);    
+};
+// ---------
+function showEditableContent() {
+		
+		 document.getElementById('staticContent').style.display = 'none';
+		 document.getElementById('editableContent').style.display = 'block';   
+};
+// ---------       
+function hideEditableContent() {
+	   
+		document.getElementById('editableContent').style.display = 'none';
+		document.getElementById('staticContent').style.display = 'block';            
+};
+// ---------
+function validateFloatNumber(value_string) {
+	
+		validField = /^[-+]?[0-9]*\.?[0-9]+$/;
+		
+		return validField.test(value_string);		   
+};
+ // ---------  
+function checkInput(form) {
+
+          var query_string = document.getElementById('inputbox').value;
+
+	  // validate 
+          if (validateFloatNumber(query_string) == false || query_string == "") {
+		    form.inputbox.value = '';
+		    document.getElementById('input_error_message').style.display = 'block';		    
+		    document.getElementById('input_error_message').innerHTML = __MSG_sorry_invalid_number__;
+
+		    return false;
+          } else {
+	  
+		    document.getElementById('input_error_message').style.display = 'none';		    
+		    document.getElementById('input_error_message').innerHTML = '';
+	  }
+          
+
+        document.getElementById('staticContent').style.display = 'block';
+	 
+	selectedFromCurrency = document.getElementById("currency_from").value;
+	selectedToCurrency = document.getElementById("currency_to").value;
+
+         // store user preferences
+	 prefs.set("prefsMoneyValue", query_string);
+	 prefs.set("prefsCurrencyFrom", selectedFromCurrency);
+	 prefs.set("prefsCurrencyTo",  selectedToCurrency);	
+    
+         // make an asyc request and return
+         makeGETRequest(query_string,selectedFromCurrency,selectedToCurrency);
+	   
+  return true;        
+};
+// ---------
+function entsub(event,ourform) {
+ 
+  if (event && event.which == 13)
+    document.getElementById('btnSearch').click();
+  else
+    return true;
+};
+// ---------  
+    
+    _IG_RegisterOnloadHandler(init);
+    
+ 
+
+    
+</script>
+<body>
+ 
+      
+
+     <form name="myform" id="myform" action="javascript:void(0);" method="GET">
+ 
+
+
+<div onMouseOver="showEditableContent();" onMouseOut="hideEditableContent();">
+
+
+<div id="staticContent" style="display:block;font-family:arial;font-size:11pt" >
+	    <div id="strstaticContent"></div>
+
+	    <div id="time_stamp" style="text-align:right;color:grey;font-size:7pt"></div>
+</div>
+  
+<div id="editableContent" style="display:none;" >
+
+<table border="0" width="100%">
+<tr>
+  <td>
+       <input type="text" name="inputbox" id="inputbox" maxlength="12" size="2" autocomplete="off" value="1" style="font-size:8pt;" onKeyPress="return entsub(event,this.form);" >
+  </td>
+  <td>
+<select name="currency_from" id="currency_from">
+
+<option  value="ANG">__MSG_ANG__</option>
+<option  value="VEF">__MSG_VEF__</option>
+<option  value="BHD">__MSG_BHD__</option>
+<option  value="NPR">__MSG_NPR__</option>
+<option  value="XOF">__MSG_XOF__</option>
+<option  value="JMD">__MSG_JMD__</option>
+<option  value="ILS">__MSG_ILS__</option>
+
+<option  value="OMR">__MSG_OMR__</option>
+<option  value="NAD">__MSG_NAD__</option>
+<option  value="DZD">__MSG_DZD__</option>
+<option  value="ISK">__MSG_ISK__</option>
+<option  value="AUD">__MSG_AUD__</option>
+<option  value="HNL">__MSG_HNL__</option>
+<option  value="SKK">__MSG_SKK__</option>
+<option  value="RON">__MSG_RON__</option>
+<option  value="TND">__MSG_TND__</option>
+
+<option  value="EUR">__MSG_EUR__</option>
+<option  value="JOD">__MSG_JOD__</option>
+<option  value="IDR">__MSG_IDR__</option>
+<option  value="KES">__MSG_KES__</option>
+<option  value="SEK">__MSG_SEK__</option>
+<option  value="MDL">__MSG_MDL__</option>
+<option  value="QAR">__MSG_QAR__</option>
+<option  value="PKR">__MSG_PKR__</option>
+<option  value="BDT">__MSG_BDT__</option>
+
+<option  value="CAD">__MSG_CAD__</option>
+<option  value="BOB">__MSG_BOB__</option>
+<option  value="BND">__MSG_BND__</option>
+<option  value="TRY">__MSG_TRY__</option>
+<option  value="SLL">__MSG_SLL__</option>
+<option  value="MKD">__MSG_MKD__</option>
+<option  value="BWP">__MSG_BWP__</option>
+<option  value="MXN">__MSG_MXN__</option>
+<option  value="PEN">__MSG_PEN__</option>
+
+<option  value="DOP">__MSG_DOP__</option>
+<option  value="NZD">__MSG_NZD__</option>
+<option  value="TZS">__MSG_TZS__</option>
+<option  value="LTL">__MSG_LTL__</option>
+<option  value="NOK">__MSG_NOK__</option>
+<option  value="KRW">__MSG_KRW__</option>
+<option  value="RUB">__MSG_RUB__</option>
+<option  value="CHF">__MSG_CHF__</option>
+<option  value="DKK">__MSG_DKK__</option>
+
+<option  value="ARS">__MSG_ARS__</option>
+<option  value="NIO">__MSG_NIO__</option>
+<option  value="CZK">__MSG_CZK__</option>
+<option  value="KYD">__MSG_KYD__</option>
+<option  value="FJD">__MSG_FJD__</option>
+<option  value="MVR">__MSG_MVR__</option>
+<option  value="SAR">__MSG_SAR__</option>
+<option  value="PHP">__MSG_PHP__</option>
+<option  value="ZMK">__MSG_ZMK__</option>
+
+<option  value="CNY">__MSG_CNY__</option>
+<option  value="LBP">__MSG_LBP__</option>
+<option  value="LKR">__MSG_LKR__</option>
+<option  value="GBP">__MSG_GBP__</option>
+<option  value="UYU">__MSG_UYU__</option>
+<option  value="TTD">__MSG_TTD__</option>
+<option  value="LVL">__MSG_LVL__</option>
+<option  value="VND">__MSG_VND__</option>
+<option  value="NGN">__MSG_NGN__</option>
+
+<option  value="RSD">__MSG_RSD__</option>
+<option  value="HKD">__MSG_HKD__</option>
+<option  value="EGP">__MSG_EGP__</option>
+<option  value="CRC">__MSG_CRC__</option>
+<option  value="USD">__MSG_USD__</option>
+<option  value="COP">__MSG_COP__</option>
+<option  value="PYG">__MSG_PYG__</option>
+<option  value="UZS">__MSG_UZS__</option>
+<option  value="INR">__MSG_INR__</option>
+
+<option  value="YER">__MSG_YER__</option>
+<option  value="JPY">__MSG_JPY__</option>
+<option  value="KWD">__MSG_KWD__</option>
+<option  value="KZT">__MSG_KZT__</option>
+<option  value="HUF">__MSG_HUF__</option>
+<option  value="SCR">__MSG_SCR__</option>
+<option  value="MUR">__MSG_MUR__</option>
+<option  value="BGN">__MSG_BGN__</option>
+<option  value="MYR">__MSG_MYR__</option>
+
+<option  value="AED">__MSG_AED__</option>
+<option  value="UGX">__MSG_UGX__</option>
+<option  value="EEK">__MSG_EEK__</option>
+<option  value="UAH">__MSG_UAH__</option>
+<option  value="THB">__MSG_THB__</option>
+<option  value="ZAR">__MSG_ZAR__</option>
+<option  value="PGK">__MSG_PGK__</option>
+<option  value="TWD">__MSG_TWD__</option>
+<option  value="CLP">__MSG_CLP__</option>
+
+<option  value="MAD">__MSG_MAD__</option>
+<option  value="SVC">__MSG_SVC__</option>
+<option  value="PLN">__MSG_PLN__</option>
+<option  value="SGD">__MSG_SGD__</option>
+<option  value="BRL">__MSG_BRL__</option>
+<option  value="HRK">__MSG_HRK__</option>
+</select>
+
+
+  </td>
+  <td>
+<span style="padding: 6px 8px">to</span>
+  </td>
+  <td>
+
+
+<select name="currency_to" id="currency_to">
+<option  value="ANG">__MSG_ANG__</option>
+<option  value="VEF">__MSG_VEF__</option>
+<option  value="BHD">__MSG_BHD__</option>
+<option  value="NPR">__MSG_NPR__</option>
+<option  value="XOF">__MSG_XOF__</option>
+<option  value="JMD">__MSG_JMD__</option>
+<option  value="ILS">__MSG_ILS__</option>
+
+<option  value="OMR">__MSG_OMR__</option>
+<option  value="NAD">__MSG_NAD__</option>
+<option  value="DZD">__MSG_DZD__</option>
+<option  value="ISK">__MSG_ISK__</option>
+<option  value="AUD">__MSG_AUD__</option>
+<option  value="HNL">__MSG_HNL__</option>
+<option  value="SKK">__MSG_SKK__</option>
+<option  value="RON">__MSG_RON__</option>
+<option  value="TND">__MSG_TND__</option>
+
+<option  value="EUR">__MSG_EUR__</option>
+<option  value="JOD">__MSG_JOD__</option>
+<option  value="IDR">__MSG_IDR__</option>
+<option  value="KES">__MSG_KES__</option>
+<option  value="SEK">__MSG_SEK__</option>
+<option  value="MDL">__MSG_MDL__</option>
+<option  value="QAR">__MSG_QAR__</option>
+<option  value="PKR">__MSG_PKR__</option>
+<option  value="BDT">__MSG_BDT__</option>
+
+<option  value="CAD">__MSG_CAD__</option>
+<option  value="BOB">__MSG_BOB__</option>
+<option  value="BND">__MSG_BND__</option>
+<option  value="TRY">__MSG_TRY__</option>
+<option  value="SLL">__MSG_SLL__</option>
+<option  value="MKD">__MSG_MKD__</option>
+<option  value="BWP">__MSG_BWP__</option>
+<option  value="MXN">__MSG_MXN__</option>
+<option  value="PEN">__MSG_PEN__</option>
+
+<option  value="DOP">__MSG_DOP__</option>
+<option  value="NZD">__MSG_NZD__</option>
+<option  value="TZS">__MSG_TZS__</option>
+<option  value="LTL">__MSG_LTL__</option>
+<option  value="NOK">__MSG_NOK__</option>
+<option  value="KRW">__MSG_KRW__</option>
+<option  value="RUB">__MSG_RUB__</option>
+<option  value="CHF">__MSG_CHF__</option>
+<option  value="DKK">__MSG_DKK__</option>
+
+<option  value="ARS">__MSG_ARS__</option>
+<option  value="NIO">__MSG_NIO__</option>
+<option  value="CZK">__MSG_CZK__</option>
+<option  value="KYD">__MSG_KYD__</option>
+<option  value="FJD">__MSG_FJD__</option>
+<option  value="MVR">__MSG_MVR__</option>
+<option  value="SAR">__MSG_SAR__</option>
+<option  value="PHP">__MSG_PHP__</option>
+<option  value="ZMK">__MSG_ZMK__</option>
+
+<option  value="CNY">__MSG_CNY__</option>
+<option  value="LBP">__MSG_LBP__</option>
+<option  value="LKR">__MSG_LKR__</option>
+<option  value="GBP">__MSG_GBP__</option>
+<option  value="UYU">__MSG_UYU__</option>
+<option  value="TTD">__MSG_TTD__</option>
+<option  value="LVL">__MSG_LVL__</option>
+<option  value="VND">__MSG_VND__</option>
+<option  value="NGN">__MSG_NGN__</option>
+
+<option  value="RSD">__MSG_RSD__</option>
+<option  value="HKD">__MSG_HKD__</option>
+<option  value="EGP">__MSG_EGP__</option>
+<option  value="CRC">__MSG_CRC__</option>
+<option  value="USD">__MSG_USD__</option>
+<option  value="COP">__MSG_COP__</option>
+<option  value="PYG">__MSG_PYG__</option>
+<option  value="UZS">__MSG_UZS__</option>
+<option  value="INR">__MSG_INR__</option>
+
+<option  value="YER">__MSG_YER__</option>
+<option  value="JPY">__MSG_JPY__</option>
+<option  value="KWD">__MSG_KWD__</option>
+<option  value="KZT">__MSG_KZT__</option>
+<option  value="HUF">__MSG_HUF__</option>
+<option  value="SCR">__MSG_SCR__</option>
+<option  value="MUR">__MSG_MUR__</option>
+<option  value="BGN">__MSG_BGN__</option>
+<option  value="MYR">__MSG_MYR__</option>
+
+<option  value="AED">__MSG_AED__</option>
+<option  value="UGX">__MSG_UGX__</option>
+<option  value="EEK">__MSG_EEK__</option>
+<option  value="UAH">__MSG_UAH__</option>
+<option  value="THB">__MSG_THB__</option>
+<option  value="ZAR">__MSG_ZAR__</option>
+<option  value="PGK">__MSG_PGK__</option>
+<option  value="TWD">__MSG_TWD__</option>
+<option  value="CLP">__MSG_CLP__</option>
+
+<option  value="MAD">__MSG_MAD__</option>
+<option  value="SVC">__MSG_SVC__</option>
+<option  value="PLN">__MSG_PLN__</option>
+<option  value="SGD">__MSG_SGD__</option>
+<option  value="BRL">__MSG_BRL__</option>
+<option  value="HRK">__MSG_HRK__</option>
+</select>
+  </td>
+  
+
+<td>
+       <INPUT TYPE="button" name="button" id="btnSearch" value="convert" style="font-size:10pt;" onClick="checkInput(this.form);">
+    
+  </td>
+  </tr>
+  </table>  
+     </FORM>
+
+</div>
+</div>
+  
+ <div id="content_div">
+ 
+</div>
+    <div id="input_error_message" style="display:none;position: absolute;top: 69px;left: 15px;text-align:center; font-size:8pt;color:red;font-weight:bold">      
+	      
+    </div>
+    
+  
+
+
+  ]]> 
+  </Content>
+  </Module>
