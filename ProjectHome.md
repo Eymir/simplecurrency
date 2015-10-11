@@ -1,0 +1,1 @@
+The most basic and smallest gadget for converting money currencies.  Saves your last used conversion configuration.  Shows flags of the country's currency.
